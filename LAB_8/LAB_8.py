@@ -49,30 +49,52 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title("Анализ товаров")
-        self.products = Product.load_from_file()
+        self.root.geometry("800x600")
+        self.root.resizable(False, False)
 
+        self.products = Product.load_from_file()
         if not self.products:
             messagebox.showerror("Ошибка", "Нет данных для анализа.")
             return
 
-        tk.Button(root, text="По категориям", command=self.show_by_category).pack(pady=5)
-        tk.Button(root, text="По продажам", command=self.show_by_sales).pack(pady=5)
+        # --- Рамка для кнопок ---
+        button_frame = tk.Frame(root)
+        button_frame.pack(pady=20, fill="x")
 
+        btn_style = {
+            "font": ("Arial", 14, "bold"),
+            "width": 20,
+            "height": 2,
+            "relief": "raised",
+            "bd": 2
+        }
+
+        tk.Button(
+            button_frame, text="По категориям",
+            command=self.show_by_category, **btn_style
+        ).pack(side="left", expand=True, padx=20)
+
+        tk.Button(
+            button_frame, text="По продажам",
+            command=self.show_by_sales, **btn_style
+        ).pack(side="left", expand=True, padx=20)
+
+        # --- Рамка для графиков ---
         self.canvas_frame = tk.Frame(root)
-        self.canvas_frame.pack()
+        self.canvas_frame.pack(expand=True, fill="both", padx=10, pady=10)
 
     def draw_pie(self, data, title):
         for widget in self.canvas_frame.winfo_children():
             widget.destroy()
 
-        fig = Figure(figsize=(5, 4))
+        fig = Figure(figsize=(6, 5))
         ax = fig.add_subplot(111)
         ax.pie(data.values(), labels=data.keys(), autopct='%1.1f%%')
         ax.set_title(title)
 
         chart = FigureCanvasTkAgg(fig, self.canvas_frame)
         chart.draw()
-        chart.get_tk_widget().pack()
+        chart.get_tk_widget().pack(expand=True)
 
     def show_by_category(self):
         data = Product.segment_by_category(self.products)
