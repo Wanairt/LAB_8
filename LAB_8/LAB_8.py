@@ -3,9 +3,6 @@ from tkinter import messagebox
 from collections import defaultdict
 import csv
 
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-
 
 class Product:
     def __init__(self, name, category, sales):
@@ -83,18 +80,41 @@ class App:
         self.canvas_frame = tk.Frame(root)
         self.canvas_frame.pack(expand=True, fill="both", padx=10, pady=10)
 
+        self.canvas = tk.Canvas(self.canvas_frame, bg="white")
+        self.canvas.pack(expand=True, fill="both")
+
     def draw_pie(self, data, title):
-        for widget in self.canvas_frame.winfo_children():
-            widget.destroy()
+        self.canvas.delete("all")
 
-        fig = Figure(figsize=(6, 5))
-        ax = fig.add_subplot(111)
-        ax.pie(data.values(), labels=data.keys(), autopct='%1.1f%%')
-        ax.set_title(title)
+        total = sum(data.values())
+        if total == 0:
+            self.canvas.create_text(400, 300, text="Нет данных", font=("Arial", 16))
+            return
 
-        chart = FigureCanvasTkAgg(fig, self.canvas_frame)
-        chart.draw()
-        chart.get_tk_widget().pack(expand=True)
+        x0, y0, x1, y1 = 250, 170, 550, 470
+
+        start_angle = 0
+        colors = ["#FF9999", "#99FF99", "#9999FF", "#FFCC99", "#FFFF99", "#CC99FF"]
+
+        for i, (key, value) in enumerate(data.items()):
+            extent = (value / total) * 360
+            color = colors[i % len(colors)]
+            self.canvas.create_arc(x0, y0, x1, y1, start=start_angle,
+                                   extent=extent, fill=color, outline="black")
+            start_angle += extent
+
+        self.canvas.create_text(400, 60, text=title, font=("Arial", 20, "bold"))
+
+        legend_x, legend_y = 600, 150
+        for i, (key, value) in enumerate(data.items()):
+            percent = (value / total) * 100
+            color = colors[i % len(colors)]
+            self.canvas.create_rectangle(legend_x, legend_y + i * 30,
+                                         legend_x + 20, legend_y + i * 30 + 20,
+                                         fill=color, outline="black")
+            self.canvas.create_text(legend_x + 30, legend_y + i * 30 + 10,
+                                    text=f"{key}: {percent:.1f}%",
+                                    anchor="w", font=("Arial", 12))
 
     def show_by_category(self):
         data = Product.segment_by_category(self.products)
